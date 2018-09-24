@@ -65,14 +65,17 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     common_params = {"padding": "same", "kernel_regularizer": tf.contrib.layers.l2_regularizer(1e-3)}
 
     layer7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, strides=(1, 1), **common_params)
-    upsample_32_output = tf.layers.conv2d_transpose(layer7_conv_1x1, num_classes, 4, strides=(32, 32), **common_params)
+    layer7_4x = tf.layers.conv2d_transpose(layer7_conv_1x1, num_classes, 4, strides=(4, 4), **common_params)
 
     layer4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, strides=(1, 1), **common_params)
-    upsample_16_output = tf.layers.conv2d_transpose(layer4_conv_1x1, num_classes, 4, strides=(16, 16), **common_params)
+    layer4_2x = tf.layers.conv2d_transpose(layer4_conv_1x1, num_classes, 4, strides=(2, 2), **common_params)
 
     layer3_conv_1x1 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, strides=(1, 1), **common_params)
-    output_3 = tf.layers.conv2d_transpose(layer3_conv_1x1, num_classes, 16, strides=(8, 8), **common_params)
-    return tf.add(tf.add(upsample_32_output, upsample_16_output), output_3)
+    merge = tf.add(tf.add(layer4_2x, layer3_conv_1x1), layer7_4x)
+
+    final_out = tf.layers.conv2d_transpose(merge, num_classes, 16, strides=(8, 8), **common_params)
+
+    return final_out
 
 tests.test_layers(layers)
 
