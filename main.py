@@ -121,11 +121,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     # TODO: Implement function
 
     for epoch in range(epochs):
-        iter = 0
         for image, label in get_batches_fn(batch_size):
-            if iter > 1:
-                break
-            iter += 1
             print("STARTING NEXT BATCH")
             print("Label original shape:")
             print(label.shape)
@@ -156,7 +152,7 @@ tests.test_train_nn(train_nn)
 
 def run():
     num_classes = 2
-    num_epochs = 1
+    num_epochs = 30
     batch_size = 32
     learning_rate = .01
     image_shape = (160, 576)
