@@ -131,7 +131,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
             except ValueError:
                 pass
 
-            out = sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 1.0, learning_rate: 0.5})
+            out, loss = sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image, correct_label: label, keep_prob: 1.0, learning_rate: 0.5})
             print("out shape:")
             try:
                 print(out.get_shape())
@@ -146,7 +146,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
                 print("Output shape: %s" % outs.get_shape())
             except ValueError:
                 print("Something happened! Noopoe")
-            print("Loss: %s" % cross_entropy_loss)
+            print("Loss: = {:.3f}".format(loss))
 tests.test_train_nn(train_nn)
 
 
