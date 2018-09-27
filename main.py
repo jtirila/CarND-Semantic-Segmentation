@@ -65,17 +65,16 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     common_params = {"padding": "same", "kernel_regularizer": tf.contrib.layers.l2_regularizer(1e-3)}
 
     layer7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, strides=(1, 1), **common_params)
-    layer7_4x = tf.layers.conv2d_transpose(layer7_conv_1x1, num_classes, 4, strides=(4, 4), **common_params)
+    layer7_2x = tf.layers.conv2d_transpose(layer7_conv_1x1, num_classes, 4, strides=(2, 2), **common_params)
 
     layer4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, strides=(1, 1), **common_params)
-    layer4_2x = tf.layers.conv2d_transpose(layer4_conv_1x1, num_classes, 4, strides=(2, 2), **common_params)
+    layer_2x_combo = tf.add(layer7_2x, layer4_conv_1x1)
 
     layer3_conv_1x1 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, strides=(1, 1), **common_params)
-    merge = tf.add(tf.add(layer4_2x, layer3_conv_1x1), layer7_4x)
+    layer_4x = tf.layers.conv2d_transpose(layer_2x_combo, num_classes, 4, strides=(2, 2), **common_params)
+    layer_4x_combo = tf.add(layer_4x, layer3_conv_1x1)
 
-    final_out = tf.layers.conv2d_transpose(merge, num_classes, 16, strides=(8, 8), **common_params)
-
-    return final_out
+    return tf.layers.conv2d_transpose(layer_4x_combo, num_classes, 16, strides=(8, 8), **common_params)
 
 tests.test_layers(layers)
 
@@ -93,7 +92,10 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
 
     logits = tf.reshape(nn_last_layer, (-1, num_classes))
     tvars = tf.trainable_variables()
-    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=correct_label))
+    print("tvars: ")
+    print(tvars)
+    labels = tf.reshape(correct_label, (-1, num_classes))
+    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
     grads = tf.gradients(cross_entropy_loss, tvars)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = optimizer.apply_gradients(zip(grads, tvars))
@@ -119,10 +121,36 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     # TODO: Implement function
 
     for epoch in range(epochs):
+        iter = 0
         for image, label in get_batches_fn(batch_size):
+            if iter > 1:
+                break
+            iter += 1
             print("STARTING NEXT BATCH")
-            sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.1})
-            # print("Loss: " + cross_entropy_loss)
+            print("Label original shape:")
+            print(label.shape)
+            try:
+                labels = tf.reshape(label, (-1, 2))
+                print("Labels shape: %s" % labels.get_shape())
+            except ValueError:
+                pass
+
+            out = sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 1.0, learning_rate: 0.5})
+            print("out shape:")
+            try:
+                print(out.get_shape())
+            except AttributeError:
+                print("no shape for out:")
+                print(out)
+
+
+            try:
+                print("Printing output shape")
+                outs = tf.reshape(out, (-1, 2))
+                print("Output shape: %s" % outs.get_shape())
+            except ValueError:
+                print("Something happened! Noopoe")
+            print("Loss: %s" % cross_entropy_loss)
 tests.test_train_nn(train_nn)
 
 
