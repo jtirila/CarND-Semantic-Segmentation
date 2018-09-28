@@ -62,19 +62,28 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     # 2) Implement the decoder part from the semantic segmentation paper (and classromm)
     # 3) Return the output tensor
     # 4) Profit
-    common_params = {"padding": "same", "kernel_regularizer": tf.contrib.layers.l2_regularizer(1e-3)}
 
-    layer7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, strides=(1, 1), **common_params)
-    layer7_2x = tf.layers.conv2d_transpose(layer7_conv_1x1, num_classes, 4, strides=(2, 2), **common_params)
+    # Using keyword argument packing to reduce duplicate code and make modifications quicker.
+    common_params = {"filters": num_classes,
+                     "padding": "same",
+                     "kernel_regularizer": tf.contrib.layers.l2_regularizer(1e-5),
+                     "kernel_initializer": tf.initializers.truncated_normal(mean=0.0, stddev=1e-5)}
 
-    layer4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, strides=(1, 1), **common_params)
+    params_1x1 = {"kernel_size": 1, "strides": (1, 1), **common_params}
+    params_2x = {"kernel_size": 4, "strides": (2, 2), **common_params}
+    params_8x = {"kernel_size": 16, "strides": (8, 8), **common_params}
+
+    layer7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, **params_1x1)
+    layer7_2x = tf.layers.conv2d_transpose(layer7_conv_1x1, **params_2x)
+
+    layer4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, **params_1x1)
     layer_2x_combo = tf.add(layer7_2x, layer4_conv_1x1)
 
-    layer3_conv_1x1 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, strides=(1, 1), **common_params)
-    layer_4x = tf.layers.conv2d_transpose(layer_2x_combo, num_classes, 4, strides=(2, 2), **common_params)
+    layer3_conv_1x1 = tf.layers.conv2d(vgg_layer3_out, **params_1x1)
+    layer_4x = tf.layers.conv2d_transpose(layer_2x_combo, **params_2x)
     layer_4x_combo = tf.add(layer_4x, layer3_conv_1x1)
 
-    return tf.layers.conv2d_transpose(layer_4x_combo, num_classes, 16, strides=(8, 8), **common_params)
+    return tf.layers.conv2d_transpose(layer_4x_combo, **params_8x)
 
 tests.test_layers(layers)
 
@@ -96,7 +105,6 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     print(tvars)
     labels = tf.reshape(correct_label, (-1, num_classes))
     cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
-    grads = tf.gradients(cross_entropy_loss, tvars)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = optimizer.minimize(cross_entropy_loss)
     return logits, train_op, cross_entropy_loss
@@ -132,20 +140,22 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
                 pass
 
             out, loss = sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image, correct_label: label, keep_prob: 1.0, learning_rate: 0.5})
-            print("out shape:")
-            try:
-                print(out.get_shape())
-            except AttributeError:
-                print("no shape for out:")
-                print(out)
 
 
-            try:
-                print("Printing output shape")
-                outs = tf.reshape(out, (-1, 2))
-                print("Output shape: %s" % outs.get_shape())
-            except ValueError:
-                print("Something happened! Noopoe")
+            ## Get rid of this mess eventually
+            # try:
+            #     print(out.get_shape())
+            # except AttributeError:
+            #     print("no shape for out:")
+            #     print(out)
+            # try:
+            #     print("Printing output shape")
+            #     outs = tf.reshape(out, (-1, 2))
+            #     print("Output shape: %s" % outs.get_shape())
+            # except ValueError:
+            #     print("Something happened! Noopoe")
+
+
             print("Loss: = {:.3f}".format(loss))
 tests.test_train_nn(train_nn)
 
@@ -154,7 +164,6 @@ def run():
     num_classes = 2
     num_epochs = 30
     batch_size = 32
-    learning_rate = .01
     image_shape = (160, 576)
     data_dir = './data'
     runs_dir = './runs'
@@ -164,7 +173,7 @@ def run():
     helper.maybe_download_pretrained_vgg(data_dir)
 
     correct_labels = tf.placeholder(dtype=tf.int8, shape=(None, image_shape[0], image_shape[1], num_classes))
-    learning_rate_placeholder = tf.placeholder(dtype=float)
+    learning_rate_placeholder = tf.placeholder(dtype='float32')
 
     # OPTIONAL: Train and Inference on the cityscapes dataset instead of the Kitti dataset.
     # You'll need a GPU with at least 10 teraFLOPS to train on.
