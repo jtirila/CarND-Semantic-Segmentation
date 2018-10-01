@@ -67,7 +67,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     common_params = {"filters": num_classes,
                      "padding": "same",
                      "kernel_regularizer": tf.contrib.layers.l2_regularizer(1e-5),
-                     "kernel_initializer": tf.initializers.truncated_normal(mean=0.0, stddev=.01)}
+                     "kernel_initializer": tf.random_normal_initializer(stddev=0.01)}
 
     params_1x1 = {"kernel_size": 1, "strides": (1, 1), **common_params}
     params_2x = {"kernel_size": 4, "strides": (2, 2), **common_params}
