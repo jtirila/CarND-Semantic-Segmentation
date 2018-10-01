@@ -67,21 +67,27 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     common_params = {"filters": num_classes,
                      "padding": "same",
                      "kernel_regularizer": tf.contrib.layers.l2_regularizer(1e-5),
-                     "kernel_initializer": tf.initializers.truncated_normal(mean=0.0, stddev=1e-5)}
+                     "kernel_initializer": tf.initializers.truncated_normal(mean=0.0, stddev=.01)}
 
     params_1x1 = {"kernel_size": 1, "strides": (1, 1), **common_params}
     params_2x = {"kernel_size": 4, "strides": (2, 2), **common_params}
     params_8x = {"kernel_size": 16, "strides": (8, 8), **common_params}
 
+    # 1x1 conv on layer7 and upscale
     layer7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, **params_1x1)
     layer7_2x = tf.layers.conv2d_transpose(layer7_conv_1x1, **params_2x)
 
+    # 1x1 conv on layer4 and combine with previous upscaled layer7, then upscale once more
     layer4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, **params_1x1)
     layer_2x_combo = tf.add(layer7_2x, layer4_conv_1x1)
+    combo_layer_7_and_4_4x = tf.layers.conv2d_transpose(layer_2x_combo, **params_2x)
 
+    # 1x1 conv on layer4 and combine with previous 4x upscaled layer7
     layer3_conv_1x1 = tf.layers.conv2d(vgg_layer3_out, **params_1x1)
-    layer_4x = tf.layers.conv2d_transpose(layer_2x_combo, **params_2x)
-    layer_4x_combo = tf.add(layer_4x, layer3_conv_1x1)
+    layer_4x_combo = tf.add(combo_layer_7_and_4_4x, layer3_conv_1x1)
+
+    # Now we have combined the 1x1 conv'ed versions of layer 7, 4 and 3. As a final step,
+    # upscale the resulting layer back to the original scale (8x) and return.
     return tf.layers.conv2d_transpose(layer_4x_combo, **params_8x)
 
 
@@ -97,13 +103,12 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     :param num_classes: Number of classes to classify
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
+
+    # Reshape both the output classifications and the correct labels to a one-dimensional array
     logits = tf.reshape(nn_last_layer, (-1, num_classes))
     correct_labels = tf.reshape(correct_label, (-1, num_classes))
 
-    # TODO: Not needed
-    # tvars = tf.trainable_variables()
-    # print("tvars: ")
-    # print(tvars)
+    # Build the loss function, optimizer and training operation based on the reshaped logits and labels.
     cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=correct_labels))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = optimizer.minimize(cross_entropy_loss)
@@ -128,8 +133,10 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
-    # TODO: Implement function
 
+    # Just iterate over the epochs and batches, continuing with the training for every new batch.
+    # No need to return anything - the effect of learning is reflected in the tensors provided
+    # as inputs (more specifically, the weights within the layers).
     for epoch_idx in range(epochs):
         print("STARTING EPOCH {}".format(epoch_idx + 1))
         for idx, (image, label) in enumerate(get_batches_fn(batch_size)):
