@@ -160,8 +160,8 @@ def run():
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
 
-    correct_labels = tf.placeholder(dtype=tf.int8, shape=(None, image_shape[0], image_shape[1], num_classes))
-    learning_rate_placeholder = tf.placeholder(dtype='float32')
+    correct_labels = tf.placeholder(dtype=tf.int32, shape=(None, None, None, num_classes))
+    learning_rate_placeholder = tf.placeholder(dtype=tf.float32, name="learning_rate")
 
     # OPTIONAL: Train and Inference on the cityscapes dataset instead of the Kitti dataset.
     # You'll need a GPU with at least 10 teraFLOPS to train on.
