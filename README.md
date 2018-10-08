@@ -114,6 +114,15 @@ for epoch_idx in range(epochs):
 
 ```
 
+### Hyperparameter values
+
+These are the hyperparameter values I used for training the network: 
+
+* learning_rate: 0.001
+* keep_prob: 0.5
+* num_epochs = 36
+* batch_size = 32
+
 ### Results & Discussion
 
 Let us take a look at some images resulting from a  
