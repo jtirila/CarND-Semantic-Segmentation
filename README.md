@@ -129,11 +129,13 @@ Let us take a look at some images resulting from a
 
 The first one - representing the majority of the results - is a relatively nice separation of road pixels from the 
 rest of the image
+
 ![Image 1](sample_images/um_000020.png)
 
 The remaining two samples are examples of different degrees of failed classification. This is apparently due to 
 variations in image lighting. It is rather probable that these misclassifications could be mitigated with 
 careful preprocessing and augmentation of the training data.  
+
 ![Image 2](sample_images/um_000051.png)
 ![Image 3](sample_images/um_000078.png)
 
