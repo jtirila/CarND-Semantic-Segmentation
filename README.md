@@ -128,7 +128,9 @@ These are the hyperparameter values I used for training the network:
 Let us take a look at some images resulting from a  
 
 The first one - representing the majority of the results - is a relatively nice separation of road pixels from the 
-rest of the image
+rest of the image.
+ 
+<br />
 
 ![Image 1](sample_images/um_000020.png)
 
@@ -136,7 +138,12 @@ The remaining two samples are examples of different degrees of failed classifica
 variations in image lighting. It is rather probable that these misclassifications could be mitigated with 
 careful preprocessing and augmentation of the training data.  
 
+<br />
+
 ![Image 2](sample_images/um_000051.png)
+
+<br />
+
 ![Image 3](sample_images/um_000078.png)
 
 
