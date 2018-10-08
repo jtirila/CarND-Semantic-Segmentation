@@ -114,6 +114,21 @@ for epoch_idx in range(epochs):
 
 ```
 
+### Results & Discussion
+
+Let us take a look at some images resulting from a  
+
+The first one - representing the majority of the results - is a relatively nice separation of road pixels from the 
+rest of the image
+![Image 1](sample_images/um_000020.png)
+
+The remaining two samples are examples of different degrees of failed classification. This is apparently due to 
+variations in image lighting. It is rather probable that these misclassifications could be mitigated with 
+careful preprocessing and augmentation of the training data.  
+![Image 2](sample_images/um_000051.png)
+![Image 3](sample_images/um_000078.png)
+
+
 ### Conclusion
 
 I liked the fact that the project template was very carefully written. Yet, the meat of the solution had to be 
@@ -121,4 +136,8 @@ understood and implement independently. The classroom material included just eno
 write most of the code and define the architecture myself. This was a fun and rewarding project. 
 
 I would have liked to implement also the video part, but had to skip and proceed with the rest of the program.  
+
+Also, I would have liked to try out some preprocessing (maybe contrast normalization) and augmentation techniques. 
+Augmentation (other than simple rotations, additions of noice etc.) of pixel-by-pixel hand-labelled images is probably 
+somewhat involved and I made no attempt at coming up with such ideas. 
 
